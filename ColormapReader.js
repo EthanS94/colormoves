@@ -245,6 +245,44 @@ function ColormapXmlSerializer()
 	}
 }
 
+function ColormapGmtSerializer()
+{
+	// Write header
+	var cm = "#COLOR_MODEL = RGB\r\n";
+	
+	this.colormapStart = function(group, name)
+	{
+		cm += "#\r\n";
+	}
+	
+	this.point = function(x, r, g, b, a)
+	{
+		// Don't think this is needed
+		cm = cm;
+	}
+	
+	this.section = function(section, startIndex, endIndex)
+	{
+		cm += ((section.start.pos * 2) - 1).toFixed(3) + " " + section.colorMap.bytes[0] + " " +
+			 section.colorMap.bytes[1] + " " + section.colorMap.bytes[2] + " " +
+			((section.end.pos * 2) - 1).toFixed(3) + " " + section.colorMap.bytes[section.colorMap.bytes.length - 3] +
+			" " + section.colorMap.bytes[section.colorMap.bytes.length - 2] + "\t" +
+			section.colorMap.bytes[section.colorMap.bytes.length - 1] + "\r\n";
+	}
+	
+	this.colormapEnd = function()
+	{
+		cm += "B 0 0 0\r\n";
+		cm += "F 255 255 255\r\n";
+		cm += "N 128 128 128";
+	}
+	
+	this.serialize = function()
+	{
+		return cm;
+	}
+}
+
 function ColormapJsonSerializer()
 {
 	var colormaps = [];

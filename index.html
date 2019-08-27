@@ -531,6 +531,7 @@ return;*/
 		autoOpen: false,
 		modal: true,
 		resizable: false,
+		width: 350,
 		buttons: {
 			XML: function() {
 				downloadColormapDialog.dialog("close");
@@ -539,6 +540,10 @@ return;*/
 			JSON: function() {
 				downloadColormapDialog.dialog("close");
 				saveColormapJSON();
+			},
+			GMT: function() {
+				downloadColormapDialog.dialog("close");
+				saveColormapGMT();
 			},
 			PNG: function() {
 				downloadColormapDialog.dialog("close");
@@ -1250,6 +1255,15 @@ readFitsImage(files[0], function(err) {
 		//console.log(cm);
 		downloader.href = "data:application/xml;charset=utf-8," + cm;
 		downloader.download = "colormap.xml";
+		downloader.click();
+	}
+	function saveColormapGMT()
+	{
+		var cm = colorMapCanvas.serializeColorMap(new ColormapGmtSerializer());
+		//console.log(cm);
+		blob = new Blob([cm], {type: "text/plain"});
+		downloader.href = URL.createObjectURL(blob);
+		downloader.download = "colormap.cpt";
 		downloader.click();
 	}
 	function saveColormapJSON()
