@@ -249,25 +249,77 @@ function ColormapGmtSerializer()
 {
 	// Write header
 	var cm = "#COLOR_MODEL = RGB\r\n";
-	
+
 	this.colormapStart = function(group, name)
 	{
 		cm += "#\r\n";
 	}
-	
+
 	this.point = function(x, r, g, b, a)
 	{
 		// Don't think this is needed
 		cm = cm;
 	}
-	
+
 	this.section = function(section, startIndex, endIndex)
 	{
-		cm += ((section.start.pos * 2) - 1).toFixed(3) + " " + section.colorMap.bytes[0] + " " +
-			 section.colorMap.bytes[1] + " " + section.colorMap.bytes[2] + " " +
-			((section.end.pos * 2) - 1).toFixed(3) + " " + section.colorMap.bytes[section.colorMap.bytes.length - 3] +
-			" " + section.colorMap.bytes[section.colorMap.bytes.length - 2] + "\t" +
-			section.colorMap.bytes[section.colorMap.bytes.length - 1] + "\r\n";
+		// Needed for the colormaps that aren't just a linear interpolation of two RGB values
+		// bytes array is [r,g,b,a,r,g,b,a,r,g,b,a,....] Red, Green, Blue, Alpha 0 to 255
+		var bytesLength = section.colorMap.bytes.length;
+		var bytesArray = JSON.parse(JSON.stringify(section.colorMap.bytes));
+		while(bytesLength--)
+		{
+			(bytesLength + 1) % 4 === 0 && bytesArray.splice(bytesLength, 1);
+		}
+		// Now bytes array is [r,g,b,r,g,b,r,g,b,....] Red, Green, Blue 0 to 255
+		// Can the section be divided into 8 new sections?
+		var gmtSectionLength = bytesArray.length / 8;
+		if(gmtSectionLength >= 3)
+		{
+			for(var i = 0; i < bytesArray.length; i += gmtSectionLength)
+			{
+				var cmPositions = new Array;
+				var cmBytes = new Array;
+				cmBytes =
+				[
+					[
+						// Red start
+						bytesArray[i],
+						// Green start
+						bytesArray[i+1],
+						// Blue start
+						bytesArray[i+2]
+					],
+					[
+						// Red end
+						bytesArray[i+gmtSectionLength-3],
+						// Green end
+						bytesArray[i+gmtSectionLength-2],
+						// Blue end
+						bytesArray[i+gmtSectionLength-1]
+					]
+				];
+				cmPositions =
+				[
+					(section.start.pos + (section.end.pos - section.start.pos) * (i / bytesArray.length)) * 2 - 1,
+					(section.start.pos + (section.end.pos - section.start.pos) * ((i + gmtSectionLength) / bytesArray.length)) * 2 - 1
+				];
+				cm +=
+				cmPositions[0].toFixed(3) + " " + cmBytes[0][0] + " " + cmBytes[0][1] + " " + cmBytes[0][2] + " " +
+				cmPositions[1].toFixed(3) + " " + cmBytes[1][0] + " " + cmBytes[1][1] + " " + cmBytes[1][2] + "\r\n";
+			}
+		}
+		else
+		{
+			cm += ((section.start.pos * 2) - 1).toFixed(3) +
+				" " + section.colorMap.bytes[0] + " " +
+				section.colorMap.bytes[1] + " " +
+				section.colorMap.bytes[2] + " " +
+				((section.end.pos * 2) - 1).toFixed(3) + " " +
+				section.colorMap.bytes[bytesArray.length - 3] + " " +
+				section.colorMap.bytes[bytesArray.length - 2] + " " +
+				section.colorMap.bytes[bytesArray.length - 1] + "\r\n";
+		}
 	}
 	
 	this.colormapEnd = function()
