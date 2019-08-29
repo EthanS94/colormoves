@@ -271,6 +271,11 @@ function ColormapGmtSerializer()
 		{
 			(bytesLength + 1) % 4 === 0 && bytesArray.splice(bytesLength, 1);
 		}
+		// Check if the section was reversed
+		if(section.flipped)
+		{
+			bytesArray = bytesArray.reverse();
+		}
 		// Now bytes array is [r,g,b,r,g,b,r,g,b,....] Red, Green, Blue 0 to 255
 		// Can the section be divided into 8 new sections?
 		var gmtSectionLength = bytesArray.length / 8;
